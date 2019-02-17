@@ -1,0 +1,4 @@
+#Inputs are historical programme start_time, end_time, viewership strength;
+#Output are programme schedules that are optimized in a way and there is no overlapping in the proposed schedulel;
+#Algorithm 1 (greedy) serves the purpose of increasing diversity for the minor time slots when genres for pupolar time slots are already chosen.
+#Algorithm 2 (dynamic programming) servers the purpose of maximzing the overall viewership based on historical viewing patterns;
