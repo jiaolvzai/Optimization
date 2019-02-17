@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tuesday Dec 18 14:00:40 2018
+
+@author: Yawen
+"""
+# import package and set working directory
+import pandas as pd
+import os
+os.chdir('/Users/wynnie/Desktop/data upload')     
+
+# define path and read content
+def getShows(filePath) :
+    df = pd.read_excel("algorithm_input.xlsx")
+    result = []
+    for index, row in df.iterrows():
+        result.append(Show(ID = row['ID'], startTime = round(row['Start_position'],2), endTime = round(row['End_position'],2), value = row['Viewership Density']))
+    return result
+    
+# function for greedy algorithm
+# Not suitable to fit long period with many 0.5 hour inputs.
+# It works better to fit unimportant short periods to diversify the genre.
+def getMaxCompatibleShows(shows) :
+    shows.sort(key=lambda x: x.endTime, reverse=False)
+    compatible = []
+    currentEnd = -999
+    for show in shows :
+        if (show.startTime >= currentEnd) :
+            compatible.append(show)
+            currentEnd = show.endTime
+    return compatible;
+    
+# function for dynamic programming
+def getMaxValueCompatibleShows(shows) :
+    shows.sort(key=lambda x: x.endTime, reverse=False)
+    lastCompatible = {}
+    
+    for i in range(0, len(shows)) :
+        lastCompatible[i] = getLastCompatibleShow(shows, i)
+        
+    
+    maxValue = [None]*len(shows)
+    maxValue[0] = shows[0].value
+    
+    for i in range(1, len(maxValue)) :
+        if (lastCompatible[i] >= 0) :
+            maxValue[i] = max(maxValue[i - 1], shows[i].value + maxValue[lastCompatible[i]])
+        else :
+            maxValue[i] = max(maxValue[i - 1], shows[i].value)
+        
+    result = []
+    addChoosenShows(shows, lastCompatible, result, maxValue, len(maxValue) - 1)
+    return result
+
+def addChoosenShows(shows, lastCompatible, result, maxValue, i) :
+    if (i < 0) :
+        return
+    
+    if (i == 0) :
+        result.append(shows[0])
+        return
+    
+    if (maxValue[i] == maxValue[i - 1]) :
+        addChoosenShows(shows, lastCompatible, result, maxValue, i - 1)
+    else :
+        result.append(shows[i])
+        addChoosenShows(shows, lastCompatible, result, maxValue, lastCompatible[i])
+
+def getLastCompatibleShow(shows, i) :
+    pre = i - 1
+    while (pre >= 0 and shows[pre].endTime > shows[i].startTime) :
+        pre -= 1
+    return pre
+ 
+# define class attributes and methods
+class Show :
+    
+    def __init__(self, ID, startTime, endTime, value) :
+        self.ID = ID
+        self.startTime = startTime
+        self.endTime = endTime
+        self.value = value
+
+    def printShow(self) :
+        print(str(self.ID), ":", str(self.startTime), "-", str(self.endTime))
+    
+
+# run main body
+if __name__ == '__main__' :
+    
+    filePath = "/Users/wynnie/Desktop/algorithm_data.xlsx"
+    shows = getShows(filePath)
+
+    allCompatibleShows = getMaxCompatibleShows(shows)
+    allCompatibleShowsSum = 0
+    print("allCompatibleShowsSum shows:")
+    for show in allCompatibleShows :
+        show.printShow()
+        allCompatibleShowsSum += show.value 
+    print("allCompatibleShowsSum : ", str(allCompatibleShowsSum), " with total number of shows: ", str(len(allCompatibleShows)))
+    maxValueCompatibleShows = getMaxValueCompatibleShows(shows)
+    maxValueCompatibleShowsSum = 0
+    print("maxValueCompatibleShowsSum shows:")
+    for show in maxValueCompatibleShows :
+        show.printShow()
+        maxValueCompatibleShowsSum += show.value
+    print("maxValueCompatibleShowsSum : ", str(maxValueCompatibleShowsSum), " with total number of shows: ", str(len(maxValueCompatibleShows)))
